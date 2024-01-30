@@ -2,12 +2,6 @@
 
 namespace WebApplication1
 {
-    public class Model
-    {
-        public int ID { get; set; }
-        public string description { get; set; }
-        public int price { get; set; }
-    }
     public class Sale
     {
         public int id_Product { get; set; }

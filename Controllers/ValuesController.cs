@@ -222,5 +222,49 @@ namespace WebApplication1.Controllers
                 return StatusCode(StatusCodes.Status500InternalServerError, $"An error occurred: {ex.Message}");
             }
         }
+
+        [HttpGet("CA_This_Month")]
+        public async Task<ActionResult> GetMonthSales(int year,int month) 
+        {
+            var sales = await _context.Sales
+                .Where(s => s.Sale_date.Year == year && s.Sale_date.Month == month)
+                .Join(_context.Products, sale => sale.id_Product, product => product.Product_id, (sale, product) => new { sale, product })
+                .Join(_context.Shops, sp => sp.sale.id_shop, shop => shop.Shop_id, (sp, shop) => new { sp.sale, sp.product, shop })
+                .Join(_context.Regions, spp => spp.shop.id_Region, region => region.Region_id, (spp, region) => new { spp.sale, spp.product, spp.shop, region })
+                .GroupBy(x => x.sale.id_Product)
+                .Select(g => new
+                {
+                    CA = g.Sum(x => x.sale.Quantity * x.product.Price),
+                    g.Key,
+                    g.First().product.Name_Product,
+                    g.First().product.Desc_Product
+                })
+                .OrderByDescending(x => x.CA)
+                .ToListAsync();
+
+            return Ok(sales);
+        }
+        [HttpGet("CA_Aggregated")]
+        public async Task<ActionResult> GetSalesBeforeDate(int year, int month)
+        {
+            var sales = await _context.Sales
+                .Where(s => s.Sale_date.Year <= year && s.Sale_date.Month <= month)
+                .Join(_context.Products, sale => sale.id_Product, product => product.Product_id, (sale, product) => new { sale, product })
+                .Join(_context.Shops, sp => sp.sale.id_shop, shop => shop.Shop_id, (sp, shop) => new { sp.sale, sp.product, shop })
+                .Join(_context.Regions, spp => spp.shop.id_Region, region => region.Region_id, (spp, region) => new { spp.sale, spp.product, spp.shop, region })
+                .GroupBy(x => x.sale.id_Product)
+                .Select(g => new
+                {
+                    CA = g.Sum(x => x.sale.Quantity * x.product.Price),
+                    g.Key,
+                    g.First().product.Name_Product,
+                    g.First().product.Desc_Product
+                })
+                .OrderByDescending(x => x.CA)
+                .ToListAsync();
+
+            return Ok(sales);
+        }
     }
 }
+
